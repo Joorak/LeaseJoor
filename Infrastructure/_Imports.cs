@@ -1,0 +1,20 @@
+﻿global using System.IdentityModel.Tokens.Jwt;
+global using System.Net;
+global using System.Net.Mail;
+global using System.Net.Mime;
+global using System.Reflection;
+global using System.Security.Claims;
+global using System.Text;
+
+//global using AutoMapper;
+global using Infrastructure.Identity;
+global using Application.Models;
+global using Application.Interfaces;
+global using Domain.Entities;
+global using Domain.Entities.Identity;
+global using Domain.Constants;
+global using Infrastructure.Persistence;
+global using Infrastructure.Services;
+global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.Extensions.Configuration;
