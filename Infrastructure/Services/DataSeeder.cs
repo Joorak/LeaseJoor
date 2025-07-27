@@ -49,19 +49,20 @@ namespace Infrastructure.Services
                 var user = await userManager.FindByNameAsync(userData.UserName);
                 if (user == null)
                 {
-                    user = new AppUser
+                    var appUser = new AppUser
                     {
                         UserName = userData.UserName,
                         Email = userData.UserName,
                         FirstName = userData.FirstName,
                         LastName = userData.LastName,
                         IsActive = true,
-                        EmailConfirmed = true
+                        EmailConfirmed = true,
+                        CreatedAt = DateTime.Now
                     };
-                    var result = await userManager.CreateAsync(user, userData.Password);
+                    var result = await userManager.CreateAsync(appUser, userData.Password);
                     if (result.Succeeded)
                     {
-                        await userManager.AddToRoleAsync(user, userData.Role);
+                        await userManager.AddToRoleAsync(appUser, userData.Role);
                     }
                 }
             }

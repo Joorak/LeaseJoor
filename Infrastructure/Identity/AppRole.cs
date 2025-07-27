@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Infrastructure.Identity
 {
@@ -12,14 +13,16 @@ namespace Infrastructure.Identity
         {
             
         }
+        [NotMapped]
         /// <summary>
         /// Navigation property for users in this role.
         /// </summary>
-        public virtual ICollection<AppUserRole> Users { get; set; } = new List<AppUserRole>();
+        public virtual ICollection<AppUserRole> Users { get; set; }
 
+        [NotMapped]
         /// <summary>
         /// Navigation property for claims associated with this role.
         /// </summary>
-        public virtual ICollection<AppRoleClaim> Claims { get; set; } = new List<AppRoleClaim>();
+        public virtual ICollection<AppRoleClaim> Claims { get; set; }
     }
 }

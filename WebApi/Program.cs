@@ -79,12 +79,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
     
-    using (var scope = app.Services.CreateScope())
-    {
-        DbContext db = scope.ServiceProvider.GetRequiredService<IdentityDb>();
-        await db.Database.MigrateAsync();
-        db.Database.EnsureCreated();
-    }
+    //using (var scope = app.Services.CreateScope())
+    //{
+    //    DbContext db = scope.ServiceProvider.GetRequiredService<IdentityDb>();
+    //    await db.Database.MigrateAsync();
+    //    db.Database.EnsureCreated();
+    //}
 }
 else
 {
@@ -115,6 +115,7 @@ if (builder.Configuration.GetValue<bool>("RunSeedingOnStartup"))
 
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();

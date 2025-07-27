@@ -26,13 +26,13 @@ namespace Infrastructure.Services
 
         public async Task<RequestResponse> ChangePasswordUserAsync(ChangePasswordRequest changePassword)
         {
-            var appUser = await _userManager.FindByIdAsync(changePassword.UserId.ToString()).ConfigureAwait(false);
+            var appUser = await _userManager.FindByIdAsync(changePassword.UserId.ToString());
             if (appUser == null)
             {
                 return RequestResponse.Failure("The user does not exist");
             }
 
-            if (!await _userManager.CheckPasswordAsync(appUser, changePassword.OldPassword!).ConfigureAwait(false))
+            if (!await _userManager.CheckPasswordAsync(appUser, changePassword.OldPassword!))
             {
                 return RequestResponse.Failure("The credentials are not valid");
             }
@@ -42,14 +42,14 @@ namespace Infrastructure.Services
                 return RequestResponse.Failure("Passwords do not match");
             }
 
-            await _userManager.ChangePasswordAsync(appUser, changePassword.OldPassword!, changePassword.NewPassword).ConfigureAwait(false);
+            await _userManager.ChangePasswordAsync(appUser, changePassword.OldPassword!, changePassword.NewPassword);
             return RequestResponse.Success();
         }
 
         public async Task<bool> CheckPasswordAsync(int userId, string password)
         {
-            var appUser = await _userManager.FindByIdAsync(userId.ToString()).ConfigureAwait(false);
-            return await _userManager.CheckPasswordAsync(appUser, password).ConfigureAwait(false);
+            var appUser = await _userManager.FindByIdAsync(userId.ToString());
+            return await _userManager.CheckPasswordAsync(appUser, password);
         }
 
         private JwtTokenResponse GenerateToken(string userName, string role)
@@ -60,7 +60,7 @@ namespace Infrastructure.Services
                 Issuer = _configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer is missing"),
                 Audience = _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience is missing"),
             };
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret));
+            var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
 
             var claims = new List<Claim>
             {
@@ -75,20 +75,22 @@ namespace Infrastructure.Services
                 Audience = jwtSettings.Audience,
                 Issuer = jwtSettings.Issuer,
                 Expires = expiresIn,
-                SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = new JwtSecurityTokenHandler().CreateToken(tokenDescriptor);
 
             return new JwtTokenResponse
             {
                 AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                ExpiresIn = (int)(expiresIn - DateTime.UtcNow).TotalSeconds,
+                //ExpiresIn = new PersianCalendarService(DateTimeOffset.FromUnixTimeSeconds((long)expiresIn.Subtract(DateTime.UtcNow).TotalSeconds).DateTime)
+                //ExpiresIn = PersianCalendarService.Now.AddSeconds(int.Parse(_configuration["Jwt:AccessTokenExpiration"]!.ToString() ?? "3600")).ToShortDateString(),
+                ExpiresIn = new PersianCalendarService(expiresIn.ToLocalTime()).ToString() 
             };
         }
 
         public async Task<RequestResponse<JwtTokenResponse>> LoginAsync(LoginRequest login)
         {
-            var appUser = await _userManager.FindByNameAsync(login.UserName).ConfigureAwait(false);
+            var appUser = await _userManager.FindByNameAsync(login.UserName);
             if (appUser == null)
                 return RequestResponse<JwtTokenResponse>.Failure("Account not found");
 
@@ -100,7 +102,7 @@ namespace Infrastructure.Services
                 }
             }
 
-            var passwordValid = await _userManager.CheckPasswordAsync(appUser, login.PassKey!).ConfigureAwait(false);
+            var passwordValid = await _userManager.CheckPasswordAsync(appUser, login.PassKey!);
             if (!passwordValid)
             {
                 return RequestResponse<JwtTokenResponse>.Failure("Email / password incorrect");
@@ -110,19 +112,26 @@ namespace Infrastructure.Services
             return RequestResponse<JwtTokenResponse>.Success(jwtToken);
         }
 
-        public async Task<RequestResponse<JwtTokenResponse>> LoginAdminAsync(string userName)
+        public async Task<RequestResponse<JwtTokenResponse>> LoginAdminAsync(string userName, string passKey)
         {
-            var appUser = await _userManager.FindByNameAsync(userName).ConfigureAwait(false);
+            var appUser = await _userManager.FindByNameAsync(userName);
             if (appUser == null)
                 return RequestResponse<JwtTokenResponse>.Failure("Admin account not found");
+            if (!await _userManager.IsInRoleAsync(appUser, StringRoleResources.Admin))
+                return RequestResponse<JwtTokenResponse>.Failure("User is not admin");
 
+            var passwordValid = await _userManager.CheckPasswordAsync(appUser, passKey!);
+            if (!passwordValid)
+            {
+                return RequestResponse<JwtTokenResponse>.Failure("Email / password incorrect");
+            }
             var jwtToken = GenerateToken(userName, StringRoleResources.Admin);
             return RequestResponse<JwtTokenResponse>.Success(jwtToken);
         }
 
         public async Task<RequestResponse<JwtTokenResponse>> RegisterAsync(RegisterRequest register)
         {
-            var existUser = await _userManager.FindByNameAsync(register.UserName).ConfigureAwait(false);
+            var existUser = await _userManager.FindByNameAsync(register.UserName);
             if (existUser != null)
             {
                 return RequestResponse<JwtTokenResponse>.Failure("The user with the unique identifier already exists");
@@ -142,26 +151,26 @@ namespace Infrastructure.Services
                 return RequestResponse<JwtTokenResponse>.Failure("Passwords do not match");
             }
 
-            var result = await _userManager.CreateAsync(newUser, register.Password).ConfigureAwait(false);
+            var result = await _userManager.CreateAsync(newUser, register.Password);
             if (!result.Succeeded)
             {
                 return RequestResponse<JwtTokenResponse>.Failure("User creation failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
-            var role = await _roleManager.FindByNameAsync(register.RoleForRegister!).ConfigureAwait(false);
+            var role = await _roleManager.FindByNameAsync(register.RoleForRegister!);
             if (role == null)
             {
                 return RequestResponse<JwtTokenResponse>.Failure("The role does not exist");
             }
 
-            await _userManager.AddToRoleAsync(newUser, role.Name!).ConfigureAwait(false);
+            await _userManager.AddToRoleAsync(newUser, role.Name!);
             var jwtToken = GenerateToken(register.UserName, register.RoleForRegister!);
             return RequestResponse<JwtTokenResponse>.Success(jwtToken);
         }
 
         public async Task<RequestResponse> ResetPasswordUserAsync(ResetPasswordRequest resetPassword)
         {
-            var appUser = await _userManager.FindByEmailAsync(resetPassword.Email!).ConfigureAwait(false);
+            var appUser = await _userManager.FindByEmailAsync(resetPassword.Email!);
             if (appUser == null)
             {
                 return RequestResponse.Failure("The user does not exist");
@@ -172,8 +181,8 @@ namespace Infrastructure.Services
                 return RequestResponse.Failure("Passwords do not match");
             }
 
-            var token = await _userManager.GeneratePasswordResetTokenAsync(appUser).ConfigureAwait(false);
-            var result = await _userManager.ResetPasswordAsync(appUser, token, resetPassword.NewPassword).ConfigureAwait(false);
+            var token = await _userManager.GeneratePasswordResetTokenAsync(appUser);
+            var result = await _userManager.ResetPasswordAsync(appUser, token, resetPassword.NewPassword);
             if (!result.Succeeded)
             {
                 return RequestResponse.Failure("Password reset failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));

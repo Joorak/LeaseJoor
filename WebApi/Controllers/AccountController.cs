@@ -3,7 +3,7 @@
 namespace WebApi.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("[controller]")]
     [Produces("application/json")]
     public class AccountController : ControllerBase
     {

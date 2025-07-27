@@ -71,13 +71,14 @@ namespace Application.Utils
             }
         }
 
-        public static class Common
+        public static class LeaseJoor
         {
-            public const string Base = "/common";
+            public const string Base = "/LeaseJoor";
             public const string Upload = Base + "/upload";
             public const string Download = Base + "/download";
             public const string Health = Base + "/health";
-            public const string Version = Base + "/version";
+            public const string ConnectionString = Base + "/connection-string";
+            public const string AdminLogin = Base + "/admin-login";
 
             public static string GetVersionedEndpoint(string endpoint, string version = "v1")
             {

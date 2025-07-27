@@ -27,7 +27,7 @@ namespace Infrastructure
                 case "memory":
                     services.AddDbContext<IdentityDb>(options => options.UseInMemoryDatabase("LeaseJoorDb"));
                     break;
-                case "localDb":
+                case "localdb":
                     services.AddDbContext<IdentityDb>(options =>
                         options.UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(IdentityDb).Assembly.FullName)));
                     break;
@@ -95,7 +95,7 @@ namespace Infrastructure
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = configuration["Jwt:Issuer"],
                         ValidAudience = configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey is missing")))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey is missing")))
                     };
                 });
 

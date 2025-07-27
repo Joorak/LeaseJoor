@@ -1,7 +1,7 @@
 ﻿namespace WebApi.Controllers
 {
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("[controller]")]
     [Produces("application/json")]
     [Authorize(Roles = "Admin")]
     public class RolesController : ControllerBase

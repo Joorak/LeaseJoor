@@ -47,7 +47,7 @@ namespace Infrastructure.Persistence
 
             builder.Entity<AppRole>(b =>
             {
-                b.ToTable("RolesConst");
+                b.ToTable("Roles");
                 b.Property(r => r.Name).HasMaxLength(50).IsRequired();
                 b.Property(r => r.NormalizedName).HasMaxLength(50).IsRequired();
             });
