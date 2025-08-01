@@ -1,4 +1,6 @@
-﻿namespace WebApi.Filters
+﻿using Infrastructure.Services;
+
+namespace WebApi.Filters
 {
     public class LogActionFilter : IActionFilter
     {
@@ -26,14 +28,26 @@
             var actionArguments = context.HttpContext.Items.FirstOrDefault(i => i.Key.ToString() == "ActionArguments").Value;
             var persianDate = PersianCalendarService.Now.ToString("yyyy/MM/dd");
 
-            _logger.LogInformation("{Date}\t{Time}\t{UserId}\t{Method}\t{Path}\t{LogParam}\t{ElapsedTime}",
-                persianDate,
-                startTime.ToString("HH:mm:ss.fff"),
-                context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0",
-                context.HttpContext.Request.Method,
-                context.HttpContext.Request.Path.Value,
-                JsonSerializer.Serialize(actionArguments),
-                DateTime.Now.Subtract(startTime).ToString(@"dd\.hh\:mm\:ss\.fff"));
+            _logger.WriteLog(
+                message: context.HttpContext.Request.Path.Value!,
+                logTypeParam: actionArguments,
+                userId: context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) != null
+                    ? int.Parse(context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)!)
+                    : 0,
+                logType: context.HttpContext.Request.Method.ToLower() == "post" ? LogType.HttpPost : LogType.HttpGet,
+                ElapsedTime: DateTime.Now.Subtract(startTime));
+
+            //_logger.LogCritical("{Date}\t{Time}\t{UserId}\t{Method}\t{Path}\t{LogParam}\t{ElapsedTime}",
+            //    persianDate,
+            //    startTime.ToString("HH:mm:ss.fff"),
+            //    context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0",
+            //    context.HttpContext.Request.Method,
+            //    context.HttpContext.Request.Path.Value,
+            //    JsonSerializer.Serialize(actionArguments),
+            //    DateTime.Now.Subtract(startTime).ToString(@"dd\.hh\:mm\:ss\.fff"));
         }
+
+
     }
+
 }

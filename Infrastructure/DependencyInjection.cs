@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 
@@ -43,6 +44,12 @@ namespace Infrastructure
                 options.UseSqlServer(configuration["ConnectionStrings:Reporting"] ?? throw new InvalidOperationException("Reporting connection string is missing")));
 
             //services.AddScoped<IdentityDb>(provider => provider.GetRequiredService<IdentityDb>());
+            services.AddHttpClient<IExternalApiService, ExternalApiService>(client =>
+            {
+                //client.BaseAddress = new Uri("https://api.example.com/");
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
 
             services.AddTransient<IAccountService, AccountService>();
             services.AddScoped<IUserService, UserService>();

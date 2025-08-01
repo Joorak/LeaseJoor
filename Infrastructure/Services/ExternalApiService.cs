@@ -1,4 +1,4 @@
-﻿namespace WebApi.Services
+﻿namespace Infrastructure.Services
 {
     public interface IExternalApiService
     {

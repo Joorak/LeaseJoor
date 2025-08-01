@@ -88,27 +88,29 @@ namespace Infrastructure.Services
             };
         }
 
-        public async Task<RequestResponse<JwtTokenResponse>> LoginAsync(LoginRequest login)
+        public async Task<RequestResponse<JwtTokenResponse>> LoginAsync(LoginRequest loginRequest)
         {
-            var appUser = await _userManager.FindByNameAsync(login.UserName);
+            var appUser = await _userManager.FindByNameAsync(loginRequest.UserName);
             if (appUser == null)
                 return RequestResponse<JwtTokenResponse>.Failure("Account not found");
+            if (!await _userManager.IsInRoleAsync(appUser, loginRequest.RoleForLogin))
+                return RequestResponse<JwtTokenResponse>.Failure("Account not found");
 
-            if (login.RoleForLogin == StringRoleResources.Customer || login.RoleForLogin == StringRoleResources.Supplier)
+            if (loginRequest.RoleForLogin == StringRoleResources.Customer || loginRequest.RoleForLogin == StringRoleResources.Supplier)
             {
-                if (!await _roleManager.RoleExistsAsync(login.RoleForLogin))
+                if (!await _roleManager.RoleExistsAsync(loginRequest.RoleForLogin))
                 {
                     return RequestResponse<JwtTokenResponse>.Failure("Invalid role specified");
                 }
             }
 
-            var passwordValid = await _userManager.CheckPasswordAsync(appUser, login.PassKey!);
+            var passwordValid = await _userManager.CheckPasswordAsync(appUser, loginRequest.PassKey!);
             if (!passwordValid)
             {
-                return RequestResponse<JwtTokenResponse>.Failure("Email / password incorrect");
+                return RequestResponse<JwtTokenResponse>.Failure("Username / password incorrect");
             }
 
-            var jwtToken = GenerateToken(login.UserName, login.RoleForLogin);
+            var jwtToken = GenerateToken(loginRequest.UserName, loginRequest.RoleForLogin);
             return RequestResponse<JwtTokenResponse>.Success(jwtToken);
         }
 
@@ -197,7 +199,7 @@ namespace Infrastructure.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey is missing")));
             try
             {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -206,7 +208,7 @@ namespace Infrastructure.Services
                     ValidIssuer = _configuration["Jwt:Issuer"],
                     ValidAudience = _configuration["Jwt:Audience"],
                     IssuerSigningKey = key
-                }, out _);
+                });
                 return RequestResponse.Success();
             }
             catch (Exception ex)

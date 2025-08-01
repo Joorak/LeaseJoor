@@ -7,13 +7,41 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
+using Serilog.Events;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseKestrel();
 builder.WebHost.UseUrls(builder.Configuration["HostURL"]!.ToString());
 
-builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(builder.Configuration));
+
+//Log.Logger = new LoggerConfiguration()
+//                        //.ReadFrom.Configuration(builder.Configuration)
+//                        .MinimumLevel.Fatal()
+//                        .WriteTo.File(path: @"Logs/logs_.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 93, fileSizeLimitBytes:1073741824,shared:true , outputTemplate: "\"{Message:lj}{NewLine}\"")
+//                        //.WriteTo.SQLite(sqliteDbPath: @"Logs/log.db", tableName: "Logs", batchSize: 1)
+//                        .CreateLogger();
+builder.Host.UseSerilog(
+        (context, services, config) => 
+            { 
+                config
+                        //.ReadFrom.Configuration(context.Configuration)
+                        .WriteTo.File(path: @"Logs/logs_.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 93, fileSizeLimitBytes: 1073741824, shared: true, outputTemplate: "{Message:lj}{NewLine}")
+                        .WriteTo.SQLite(sqliteDbPath: @"Logs/logs.db", tableName: "Logs", batchSize: 1)
+                        .MinimumLevel.Fatal();
+            });
+//builder.Host.UseSerilog(
+//    (context, services, configuration) =>
+//    {
+//        configuration
+//            .ReadFrom.Configuration(context.Configuration)
+//            .ReadFrom.Services(services)
+//            .Enrich.FromLogContext()
+//            .WriteTo.SQLite(sqliteDbPath: Environment.CurrentDirectory + @"logs/logs.db", tableName: "Log", batchSize: 1);
+//    });
+
+
+//builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(builder.Configuration));
 // تنظیم Serilog برای لاگ‌گیری
 //builder.Host.UseSerilog((context, services, configuration) =>
 //{
@@ -28,7 +56,8 @@ builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(builder.Configura
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // افزودن کنترلرها
-builder.Services.AddControllers();
+//builder.Services.AddControllers();
+builder.Services.AddControllers(options => { options.Filters.Add<LogActionFilter>(); });
 
 // تنظیم OpenAPI
 builder.Services.AddOpenApi();
@@ -113,7 +142,7 @@ if (builder.Configuration.GetValue<bool>("RunSeedingOnStartup"))
     await DataSeeder.SeedDataAsync(services);
 }
 
-app.UseSerilogRequestLogging();
+//app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors("AllowAll");

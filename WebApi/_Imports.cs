@@ -4,7 +4,7 @@ global using System.Text;
 global using System.Text.Json;
 global using Application.Interfaces;
 global using Application.Models;
-global using Domain.Entities.Identity;
+global using Domain.Enums;
 global using Infrastructure;
 global using Infrastructure.Services;
 global using Infrastructure.Persistence;

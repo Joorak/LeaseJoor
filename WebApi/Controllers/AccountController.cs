@@ -37,22 +37,23 @@ namespace WebApi.Controllers
                     return BadRequest(RequestResponse.Failure("اطلاعات وارد شده نامعتبر است."));
                 }
 
-                _logger.LogInformation("Login attempt for user: {UserName}", loginRequest.UserName);
+                _logger.WriteLog($"Login attempt for user: {loginRequest.UserName}");
+
 
                 var result = await _accountService.LoginAsync(loginRequest);
 
                 if (result.Successful && result.Item != null)
                 {
-                    _logger.LogInformation("Login successful for user: {UserName}", loginRequest.UserName);
+                    _logger.WriteLog($"Login successful for user: {loginRequest.UserName}");
                     return Ok(result);
                 }
 
-                _logger.LogWarning("Login failed for user: {UserName}", loginRequest.UserName);
+                _logger.WriteLog($"Login failed for user: {loginRequest.UserName}", result.ErrorMessage);
                 return Unauthorized(RequestResponse.Failure("نام کاربری یا رمز عبور اشتباه است."));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during login for user: {UserName}", loginRequest.UserName);
+                _logger.WriteLog(message: $"Error during login for user: {loginRequest.UserName}", logTypeParam: ex.Message, logType: LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }
@@ -70,13 +71,13 @@ namespace WebApi.Controllers
                     return BadRequest(RequestResponse.Failure("اطلاعات وارد شده نامعتبر است."));
                 }
 
-                _logger.LogInformation("Registration attempt for user: {UserName}", registerRequest.UserName);
+                _logger.WriteLog($"Registration attempt for user: {registerRequest.UserName}");
 
                 var result = await _accountService.RegisterAsync(registerRequest);
 
                 if (result.Successful && result.Item != null)
                 {
-                    _logger.LogInformation("Registration successful for user: {UserName}", registerRequest.UserName);
+                    _logger.WriteLog($"Registration successful for user: {registerRequest.UserName}");
                     return Ok(result);
                 }
 
@@ -89,7 +90,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during registration for user: {UserName}", registerRequest.UserName);
+                _logger.WriteLog(message:$"Error during registration for user: {registerRequest.UserName}", logTypeParam:ex.Message, logType:LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }
@@ -118,7 +119,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during token validation");
+                _logger.WriteLog(message: "Error during token validation", logTypeParam: ex.Message, logType: LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }
@@ -148,13 +149,13 @@ namespace WebApi.Controllers
                     return Forbid();
                 }
 
-                _logger.LogInformation("Password change request for user: {UserId}", changePasswordRequest.UserId);
+                _logger.WriteLog($"Password change request for user: {changePasswordRequest.UserId}");
 
                 var result = await _accountService.ChangePasswordUserAsync(changePasswordRequest);
 
                 if (result.Successful)
                 {
-                    _logger.LogInformation("Password changed successfully for user: {UserId}", changePasswordRequest.UserId);
+                    _logger.WriteLog($"Password changed successfully for user: {changePasswordRequest.UserId}");
                     return Ok(result);
                 }
 
@@ -162,7 +163,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during password change for user: {UserId}", changePasswordRequest.UserId);
+                _logger.WriteLog(message: $"Error during password change for user: {changePasswordRequest.UserId}", logTypeParam: ex.Message, logType:LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }
@@ -180,13 +181,13 @@ namespace WebApi.Controllers
                     return BadRequest(RequestResponse.Failure("اطلاعات وارد شده نامعتبر است."));
                 }
 
-                _logger.LogInformation("Password reset request for email: {Email}", resetPasswordRequest.Email);
+                _logger.WriteLog("Password reset request for email: {Email}", resetPasswordRequest.Email);
 
                 var result = await _accountService.ResetPasswordUserAsync(resetPasswordRequest);
 
                 if (result.Successful)
                 {
-                    _logger.LogInformation("Password reset successful for email: {Email}", resetPasswordRequest.Email);
+                    _logger.WriteLog("Password reset successful for email: {Email}", resetPasswordRequest.Email);
                     return Ok(result);
                 }
 
@@ -199,7 +200,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during password reset for email: {Email}", resetPasswordRequest.Email);
+                _logger.WriteLog(message:$"Error during password reset for email: {resetPasswordRequest.Email}", logTypeParam: ex.Message, logType: LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }
@@ -229,7 +230,7 @@ namespace WebApi.Controllers
                     return Forbid();
                 }
 
-                _logger.LogInformation("Password check request for user: {UserId}", checkPasswordRequest.UserId);
+                _logger.WriteLog($"Password check request for user: {checkPasswordRequest.UserId}");
 
                 var user = await _userService.GetUserByIdAsync(checkPasswordRequest.UserId);
                 if (user == null)
@@ -239,14 +240,13 @@ namespace WebApi.Controllers
 
                 var result = await _accountService.CheckPasswordAsync(user.Id, checkPasswordRequest.Password);
 
-                _logger.LogInformation("Password check completed for user: {UserId}, Result: {Result}",
-                    checkPasswordRequest.UserId, result);
+                _logger.WriteLog($"Password check completed for user: {checkPasswordRequest.UserId}, Result: {result}");
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during password check for user: {UserId}", checkPasswordRequest.UserId);
+                _logger.WriteLog(message:$"Error during password check for user: {checkPasswordRequest.UserId}", logTypeParam: ex.Message, logType: LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }
@@ -263,7 +263,7 @@ namespace WebApi.Controllers
                     return BadRequest(RequestResponse.Failure("اطلاعات وارد شده نامعتبر است."));
                 }
 
-                _logger.LogInformation("SMS code request for mobile: {MobileNumber}", smsSendRequest.MobileNumber);
+                _logger.WriteLog($"SMS code request for mobile: {smsSendRequest.MobileNumber}");
 
                 var passKey = new Random().Next(100000, 999999).ToString();
                 var result = await _accountService.SendPassKeyAsync(smsSendRequest.MobileNumber, passKey);
@@ -277,7 +277,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending SMS code to: {MobileNumber}", smsSendRequest.MobileNumber);
+                _logger.WriteLog(message: $"Error sending SMS code to: {smsSendRequest.MobileNumber}", logTypeParam: ex.Message, logType:LogType.Error);
                 return StatusCode(500, RequestResponse.Failure("خطای داخلی سرور رخ داده است."));
             }
         }

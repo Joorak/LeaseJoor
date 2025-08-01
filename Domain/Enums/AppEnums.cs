@@ -12,3 +12,11 @@ public enum Priority
     High = 4,
     RealTime = 5
 }
+public enum LogType
+{
+    HttpPost = 1,
+    HttpGet = 2,
+    Info = 3,
+    Error = 4,
+    Unknown = 5
+}
